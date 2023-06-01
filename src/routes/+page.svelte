@@ -18,12 +18,10 @@
 
     onMount(() => {
 
-        /*
         canvasBufferCtx = canvasBuffer.getContext('2d', {willReadFrequently: true});
 
         canvasBufferCtx.fillStyle = "#FF0000";
-        canvasBufferCtx.drawRect(0, 0, 10, 10);
-        */
+        canvasBufferCtx.fillRect(0, 0, 10, 10);
 
         // Check if the browser supports the MediaDevices API
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -33,18 +31,18 @@
                     // Set the video source to the webcam stream
                     videoElement.srcObject = stream;
                     videoElement.play()
-                    planeTexture = new THREE.VideoTexture( videoElement );
-                    // planeTexture.needsUpdate = true;
+                    planeTexture = new THREE.CanvasTexture( canvasBuffer );
+
                     planeMat = new THREE.MeshBasicMaterial({
+                    color: 0xFF0000,
                         map: planeTexture, 
                         side: THREE.DoubleSide, 
                         transparent: true
                     });
+
                     // planeTexture.minFilter = THREE.LinearFilter;
                     // planeTexture.magFilter = THREE.LinearFilter;
                     // planeTexture.format = THREE.RGBFormat;
-                    
-
                 })
                 .catch(function(error) {
                     console.error('Error accessing webcam:', error);
@@ -53,7 +51,7 @@
                 console.error('MediaDevices API not supported by the browser');
             }
 
-        // drawVideoToCanvas();
+        drawVideoToCanvas();
 
 
         /* -- WebSocket stuff  */
@@ -92,19 +90,12 @@
         plane = new THREE.Mesh( planeGeo, planeMat );
         scene.add(plane);
         plane.position.y = .5;
-        // == 3d Rotating Cube ==
-        // const geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
-        // const material = new THREE.MeshNormalMaterial();
-
-        // const mesh = new THREE.Mesh( geometry, material );
-        // scene.add( mesh );
 
         let alphaOn = false;
         const renderer = new THREE.WebGLRenderer( { antialias: true, alpha: alphaOn } );
         renderer.setSize( window.innerWidth, window.innerHeight );
         renderer.setAnimationLoop( animation );
         threeCanvas.appendChild( renderer.domElement );
-        
 
         /* -- Controls -- */
         // Orbit Controls
@@ -126,7 +117,7 @@
             }
             // camera.rotation.y += .01;
 
-            FPcontrols.update(clock.getDelta());
+            // FPcontrols.update(clock.getDelta());
             renderer.render( scene, camera );
 
         }
@@ -137,8 +128,9 @@
     }
 
     function drawVideoToCanvas(){
-        // canvasBufferCtx.drawImage(videoElement, 0, 0, 300, 200);
-        // replaceGreenWithAlpha(canvasBuffer);
+        canvasBufferCtx.drawImage(videoElement, 0, 0, 300, 200);
+        replaceGreenWithAlpha(canvasBuffer);
+        canvasBufferCtx.fillRect(0,0,10,10);
         window.requestAnimationFrame(drawVideoToCanvas);
     }
 
@@ -152,8 +144,14 @@
             var green = data[i + 1];
             var blue = data[i + 2];
             
+            let threshHold = {
+                r: 200,
+                g: 50,
+                b: 200
+            }
+
             // Check if the pixel is green (you can adjust the threshold as needed)
-            if (green > 100 && red < 100 && blue < 100) {
+            if (green > threshHold.g && red > threshHold.r && blue > threshHold.b) {
             // Set the alpha channel to 0 (transparent)
             data[i + 3] = 0;
             }
@@ -165,10 +163,10 @@
 
 </script>
 
-<div>
+<div id="Container">
     <video bind:this={videoElement} />
-    <!-- <canvas bind:this={canvasBuffer} /> -->
-    <div bind:this={threeCanvas}></div>
+    <canvas bind:this={canvasBuffer} />
+    <div id="MainCanvas" bind:this={threeCanvas}></div>
 </div>
 
 <style>
@@ -178,6 +176,22 @@ body{
 }
 
 video{
+    display: none;
     width: 300px;
 }
+canvas{
+    position: absolute;
+    top: 0px;
+    z-index: 9999;
+}
+
+#Container{
+    position: relative;
+}
+
+#MainCanvas{
+    position: absolute;
+    top: 0px;
+    z-index: 9998;
+    }
 </style>

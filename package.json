@@ -3,10 +3,10 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev & npm run run",
 		"build": "vite build",
 		"preview": "vite preview",
-		"run": "node src/server/index.js",
+		"run": "nodemon src/server/index.js",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
@@ -22,6 +22,7 @@
 	"type": "module",
 	"dependencies": {
 		"node-osc": "^8.0.11",
+		"nodemon": "^2.0.22",
 		"three": "^0.152.2",
 		"ws": "^8.13.0"
 	}
