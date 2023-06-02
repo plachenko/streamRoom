@@ -12,16 +12,13 @@
     let canvasBuffer;
     let canvasBufferCtx;
     let threeCanvas;
-    let planeTexture;
-    let planeMat;
     let plane;
 
     onMount(() => {
+        canvasBuffer.width = 300;
+        canvasBuffer.height = 195;
 
         canvasBufferCtx = canvasBuffer.getContext('2d', {willReadFrequently: true});
-
-        canvasBufferCtx.fillStyle = "#FF0000";
-        canvasBufferCtx.fillRect(0, 0, 10, 10);
 
         // Check if the browser supports the MediaDevices API
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -30,15 +27,7 @@
                 .then(function(stream) {
                     // Set the video source to the webcam stream
                     videoElement.srcObject = stream;
-                    videoElement.play()
-                    planeTexture = new THREE.CanvasTexture( canvasBuffer );
-
-                    planeMat = new THREE.MeshBasicMaterial({
-                    color: 0xFF0000,
-                        map: planeTexture, 
-                        side: THREE.DoubleSide, 
-                        transparent: true
-                    });
+                    videoElement.play();
 
                     // planeTexture.minFilter = THREE.LinearFilter;
                     // planeTexture.magFilter = THREE.LinearFilter;
@@ -85,16 +74,24 @@
         scene.add(helper);
 
         // == Capture plane ==
-        const planeGeo = new THREE.PlaneGeometry(2 , 1);
-
+        const planeGeo = new THREE.PlaneGeometry(1 , .7);
+        const planeTexture = new THREE.CanvasTexture( canvasBuffer );
+        const planeMat = new THREE.MeshBasicMaterial({
+            color: 0xFFF0FF,
+            map: planeTexture, 
+            side: THREE.DoubleSide, 
+            transparent: true
+        });
         plane = new THREE.Mesh( planeGeo, planeMat );
         scene.add(plane);
         plane.position.y = .5;
 
-        let alphaOn = false;
+        let alphaOn = true;
+        
         const renderer = new THREE.WebGLRenderer( { antialias: true, alpha: alphaOn } );
         renderer.setSize( window.innerWidth, window.innerHeight );
         renderer.setAnimationLoop( animation );
+
         threeCanvas.appendChild( renderer.domElement );
 
         /* -- Controls -- */
@@ -106,16 +103,19 @@
         FPcontrols.lookSpeed = .3;
         FPcontrols.activeLook = false;
 
+        lookAt()
+
         // animation
         function animation( time ) {
             // mesh.rotation.x = time / 2000;
             // mesh.rotation.y = time / 1000;
-            if(posData.length && lookAtLock){
-                plane.position.x = posData[1] * 3;
-                plane.position.z = (posData[3] * -2) + 2;
-                FPcontrols.lookAt(posData[1], posData[2]-.8, posData[3]);
+            if(posData.length){
+                // plane.position.x = posData[1] * 1;
+                plane.position.z = (posData[3] * -1) + 2;
+                if(lookAtLock) FPcontrols.lookAt(posData[1], posData[2]-.8, posData[3] * -1);
             }
             // camera.rotation.y += .01;
+            planeTexture.needsUpdate = true;
 
             // FPcontrols.update(clock.getDelta());
             renderer.render( scene, camera );
@@ -130,7 +130,6 @@
     function drawVideoToCanvas(){
         canvasBufferCtx.drawImage(videoElement, 0, 0, 300, 200);
         replaceGreenWithAlpha(canvasBuffer);
-        canvasBufferCtx.fillRect(0,0,10,10);
         window.requestAnimationFrame(drawVideoToCanvas);
     }
 
@@ -145,13 +144,13 @@
             var blue = data[i + 2];
             
             let threshHold = {
-                r: 200,
-                g: 50,
-                b: 200
+                r: 100,
+                g: 100,
+                b: 100
             }
 
             // Check if the pixel is green (you can adjust the threshold as needed)
-            if (green > threshHold.g && red > threshHold.r && blue > threshHold.b) {
+            if (green > threshHold.g && red < threshHold.r && blue < threshHold.b) {
             // Set the alpha channel to 0 (transparent)
             data[i + 3] = 0;
             }
@@ -170,10 +169,6 @@
 </div>
 
 <style>
-body{
-    padding: 0px;
-    margin: 0px;
-}
 
 video{
     display: none;
